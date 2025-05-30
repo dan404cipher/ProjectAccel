@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import useApi from 'shared/hooks/api';
 import { Form, PageLoader, Button } from 'shared/components';
 import { ProjectCategory, ProjectCategoryCopy } from 'shared/constants/projects';
@@ -10,13 +10,14 @@ const categoryOptions = Object.values(ProjectCategory).map(category => ({
 }));
 
 const CreateProject = () => {
-  const navigate = useNavigate();
-  const [{ isCreating }, createProject] = useApi.post('/projects');
+  const history = useHistory();
+  const [{ isCreating }, createProject] = useApi.post('/project');
 
   const handleSubmit = async (values, form) => {
     try {
       const { project } = await createProject(values);
-      navigate(`/project/${project.id}/board`);
+      history.push(`/project/${project.id}/board`);
+      window.location.reload();
     } catch (error) {
       Form.handleAPIError(error, form);
     }

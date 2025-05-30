@@ -146,8 +146,6 @@ issueSchema.virtual('reporter', {
   justOne: true
 });
 
-export const Issue = mongoose.model<IIssue>('Issue', issueSchema);
-
 const baseIssueSchema = {
   title: Joi.string().required().max(200),
   type: Joi.string().valid(...Object.values(IssueType)).required(),

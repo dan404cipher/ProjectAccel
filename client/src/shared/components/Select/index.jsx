@@ -108,7 +108,6 @@ const Select = ({
   };
 
   const handleChange = newValue => {
-    console.log('Select handleChange:', newValue); // Debug log
     if (!isControlled) {
       setStateValue(preserveValueType(newValue));
     }

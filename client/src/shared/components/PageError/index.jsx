@@ -1,21 +1,32 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import { ErrorPage, ErrorPageInner, ErrorBox, StyledIcon, Title } from './Styles';
 
-const PageError = () => (
+const PageError = ({ error }) => (
   <ErrorPage>
     <ErrorPageInner>
       <ErrorBox>
         <StyledIcon type="bug" />
-        <Title>There’s been a glitch…</Title>
+        <Title>There's been a glitch…</Title>
         <p>
-          {'We’re not quite sure what went wrong. Please contact us or try looking on our '}
-          <a href="https://support.atlassian.com/jira-software-cloud/">Help Center</a>
-          {' if you need a hand.'}
+          {error?.message || "We're not quite sure what went wrong. Please try again or contact support."}
         </p>
+        {error?.code && <p>Error code: {error.code}</p>}
       </ErrorBox>
     </ErrorPageInner>
   </ErrorPage>
 );
+
+PageError.propTypes = {
+  error: PropTypes.shape({
+    message: PropTypes.string,
+    code: PropTypes.string,
+  }),
+};
+
+PageError.defaultProps = {
+  error: null,
+};
 
 export default PageError;

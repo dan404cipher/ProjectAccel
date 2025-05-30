@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { Route, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Route, useRouteMatch, useHistory } from 'react-router-dom';
 
 import useMergeState from 'shared/hooks/mergeState';
 import { Breadcrumbs, Modal } from 'shared/components';
@@ -24,11 +24,8 @@ const defaultFilters = {
 };
 
 const ProjectBoard = ({ project, fetchProject, updateLocalProjectIssues }) => {
-  console.log('Board component rendering with project:', project); // Debug log
-
-  const { issueId } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const match = useRouteMatch();
+  const history = useHistory();
 
   const [filters, mergeFilters] = useMergeState(defaultFilters);
 
@@ -47,24 +44,27 @@ const ProjectBoard = ({ project, fetchProject, updateLocalProjectIssues }) => {
         filters={filters}
         updateLocalProjectIssues={updateLocalProjectIssues}
       />
-      {issueId && (
-        <Modal
-          isOpen
-          testid="modal:issue-details"
-          width={1040}
-          withCloseIcon={false}
-          onClose={() => navigate(location.pathname.replace(`/issues/${issueId}`, ''))}
-          renderContent={modal => (
-            <IssueDetails
-              issueId={issueId}
-              projectUsers={project.users}
-              fetchProject={fetchProject}
-              updateLocalProjectIssues={updateLocalProjectIssues}
-              modalClose={modal.close}
-            />
-          )}
-        />
-      )}
+      <Route
+        path={`${match.path}/issues/:issueId`}
+        render={routeProps => (
+          <Modal
+            isOpen
+            testid="modal:issue-details"
+            width={1040}
+            withCloseIcon={false}
+            onClose={() => history.push(match.url)}
+            renderContent={modal => (
+              <IssueDetails
+                issueId={routeProps.match.params.issueId}
+                projectUsers={project.users}
+                fetchProject={fetchProject}
+                updateLocalProjectIssues={updateLocalProjectIssues}
+                modalClose={modal.close}
+              />
+            )}
+          />
+        )}
+      />
     </Fragment>
   );
 };

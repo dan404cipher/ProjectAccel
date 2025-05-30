@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { Icon, AboutTooltip } from 'shared/components';
-import { useNavigate } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 
 import { NavLeft, LogoLink, StyledLogo, Bottom, Item, ItemText } from './Styles';
 
@@ -12,7 +12,7 @@ const propTypes = {
 };
 
 const ProjectNavbarLeft = ({ issueSearchModalOpen, issueCreateModalOpen }) => {
-  const navigate = useNavigate();
+  const history = useHistory();
   return (
     <NavLeft>
       <LogoLink to="/">
@@ -24,7 +24,7 @@ const ProjectNavbarLeft = ({ issueSearchModalOpen, issueCreateModalOpen }) => {
         <ItemText>Search issues</ItemText>
       </Item>
 
-      <Item onClick={() => navigate('/project/create')}>
+      <Item onClick={() => history.push('/project/create')}>
         <Icon type="plus" size={27} />
         <ItemText>Create Project</ItemText>
       </Item>

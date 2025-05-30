@@ -18,8 +18,7 @@ const userSchema = new Schema<IUser>({
     type: String,
     required: true,
     maxlength: 100,
-    trim: true,
-    validate: is.required()
+    trim: true
   },
   email: {
     type: String,
@@ -27,8 +26,7 @@ const userSchema = new Schema<IUser>({
     maxlength: 200,
     unique: true,
     trim: true,
-    lowercase: true,
-    validate: [is.required(), is.email()]
+    lowercase: true
   },
   avatarUrl: {
     type: String,

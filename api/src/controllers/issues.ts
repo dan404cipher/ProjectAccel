@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import { Issue } from '../entities';
+import { Issue, Project } from '../entities';
 import { NotFoundError } from '../errors';
 import { validateSchema } from '../middleware/validateSchema';
 import { createIssueSchema, updateIssueSchema } from '../schemas/Issue';
+import { catchErrors } from '../errors/asyncCatch';
 
 export const getIssues = async (req: Request, res: Response) => {
   const { projectId } = req.query;
@@ -69,8 +70,17 @@ export const getIssue = async (req: Request, res: Response) => {
 
 export const createIssue = [
   validateSchema(createIssueSchema),
-  async (req: Request, res: Response) => {
+  catchErrors(async (req: Request, res: Response) => {
+    console.log('Creating issue with data:', req.body);
+
     const { title, type, status, priority, listPosition, description, estimate, timeSpent, reporterId, projectId, users } = req.body;
+
+    // Validate project exists
+    const project = await Project.findById(projectId);
+    if (!project) {
+      console.error('Project not found:', projectId);
+      throw new NotFoundError('Project not found');
+    }
 
     const issue = await Issue.create({
       title,
@@ -87,9 +97,10 @@ export const createIssue = [
     });
 
     await issue.populate('users', 'name email avatarUrl');
+    console.log('Created issue:', issue);
 
     res.status(201).json(issue);
-  }
+  })
 ];
 
 export const updateIssue = [

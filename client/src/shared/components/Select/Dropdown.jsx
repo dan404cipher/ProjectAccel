@@ -61,7 +61,6 @@ const SelectDropdown = ({
   });
 
   const selectOptionValue = optionValue => {
-    console.log('SelectDropdown selectOptionValue:', optionValue); // Debug log
     deactivateDropdown();
     if (isMulti) {
       onChange(uniq([...value, optionValue]));

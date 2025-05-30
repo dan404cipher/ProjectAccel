@@ -1,8 +1,9 @@
-import { Request, Response } from 'express';
-import { User } from '../entities';
+import { Request, Response, NextFunction } from 'express';
+import { User } from '../schemas/User';
 import { BadRequestError } from '../errors';
 import { validateSchema } from '../middleware/validateSchema';
 import { loginSchema, registerSchema } from '../schemas/auth';
+import mongoose from 'mongoose';
 
 export const login = [
   validateSchema(loginSchema),
@@ -22,7 +23,7 @@ export const login = [
       return res.json({ user: mockUser });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
       throw new BadRequestError('Invalid credentials');
     }
@@ -33,33 +34,64 @@ export const login = [
     }
 
     if (req.session) {
-      req.session.userId = (user._id as unknown as string).toString();
+      req.session.userId = (user._id as mongoose.Types.ObjectId).toString();
     }
-    res.json({ user });
+    res.json({
+      message: 'Login successful',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatarUrl: user.avatarUrl
+      }
+    });
   }
 ];
 
 export const register = [
   validateSchema(registerSchema),
-  async (req: Request, res: Response) => {
-    const { name, email, password } = req.body;
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { name, email, password } = req.body;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      throw new BadRequestError('Email already in use');
+      // Check if user already exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        throw new BadRequestError('Email already exists');
+      }
+
+      // Generate avatar URL using DiceBear API
+      const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`;
+
+      // Create new user
+      const user = await User.create({
+        name,
+        email,
+        password,
+        avatarUrl
+      });
+
+      // Create session
+      if (req.session) {
+        req.session.userId = (user._id as mongoose.Types.ObjectId).toString();
+      }
+
+      res.status(201).json({
+        message: 'User registered successfully',
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          avatarUrl: user.avatarUrl
+        }
+      });
+    } catch (error: any) {
+      if (error.name === 'ValidationError') {
+        next(new BadRequestError('Invalid user data: ' + Object.values(error.errors).map((err: any) => err.message).join(', ')));
+      } else {
+        next(error);
+      }
     }
-
-    const user = await User.create({
-      name,
-      email,
-      password,
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
-    });
-
-    if (req.session) {
-      req.session.userId = (user._id as unknown as string).toString();
-    }
-    res.status(201).json(user);
   }
 ];
 

@@ -27,7 +27,7 @@ const is = {
     Array.isArray(value) && value.length === 0 && 'Please add at least one item',
 
   email: () => (value: Value): ErrorMessage =>
-    !!value && !/.+@.+\..+/.test(value) && 'Must be a valid email',
+    !!value && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value) && 'Must be a valid email',
 
   url: () => (value: Value): ErrorMessage =>
     !!value &&

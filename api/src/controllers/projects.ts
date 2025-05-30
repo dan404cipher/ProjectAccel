@@ -24,7 +24,11 @@ export const getProjectWithUsersAndIssues = catchErrors(async (req, res) => {
     return res.status(400).json({ error: 'Invalid project ID format' });
   }
 
-  const project = await Project.findById(projectId).populate('users issues sprints');
+  const project = await Project.findById(projectId)
+    .populate('users', 'name email avatarUrl')
+    .populate('issues')
+    .populate('sprints');
+  
   console.log('Found project:', project ? 'yes' : 'no');
 
   if (!project) {
@@ -32,13 +36,23 @@ export const getProjectWithUsersAndIssues = catchErrors(async (req, res) => {
     throw new Error('Project not found');
   }
 
-  const issues = (await project.populate('issues')).issues as unknown as IIssue[];
-  res.respond({
+  const projectObj = project.toObject();
+  const issues = (projectObj.issues || []) as unknown as IIssue[];
+  
+  // Ensure consistent response structure
+  const response = {
     project: {
-      ...project.toObject(),
+      ...projectObj,
+      id: projectObj._id, // Add id field for backward compatibility
+      _id: projectObj._id, // Keep _id for MongoDB compatibility
       issues: issues.map(issuePartial),
-    },
-  });
+      users: projectObj.users || [],
+      sprints: projectObj.sprints || []
+    }
+  };
+
+  console.log('Sending response:', JSON.stringify(response, null, 2));
+  res.respond(response);
 });
 
 export const create = [
@@ -60,10 +74,29 @@ export const create = [
 ];
 
 export const update = catchErrors(async (req, res) => {
-  const project = await Project.findByIdAndUpdate(req.body.projectId, req.body, { new: true });
+  console.log('Update project request:', {
+    params: req.params,
+    body: req.body
+  });
+
+  const projectId = req.params.projectId;
+  if (!projectId || !mongoose.Types.ObjectId.isValid(projectId)) {
+    console.error('Invalid project ID:', projectId);
+    throw new Error('Invalid project ID');
+  }
+
+  const project = await Project.findByIdAndUpdate(
+    projectId,
+    { $set: req.body },
+    { new: true }
+  ).populate('users');
+
   if (!project) {
+    console.error('Project not found:', projectId);
     throw new Error('Project not found');
   }
+
+  console.log('Updated project:', project);
   res.respond({ project });
 });
 

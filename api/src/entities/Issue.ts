@@ -1,6 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import striptags from 'striptags';
-import is from 'utils/validation';
 import { IssueType, IssueStatus, IssuePriority } from 'constants/issues';
 
 export interface IIssue extends Document {
@@ -28,31 +27,26 @@ const issueSchema = new Schema<IIssue>({
     type: String,
     required: true,
     maxlength: 200,
-    trim: true,
-    validate: is.required()
+    trim: true
   },
   type: {
     type: String,
     required: true,
-    enum: Object.values(IssueType),
-    validate: [is.required(), is.oneOf(Object.values(IssueType))]
+    enum: Object.values(IssueType)
   },
   status: {
     type: String,
     required: true,
-    enum: Object.values(IssueStatus),
-    validate: [is.required(), is.oneOf(Object.values(IssueStatus))]
+    enum: Object.values(IssueStatus)
   },
   priority: {
     type: String,
     required: true,
-    enum: Object.values(IssuePriority),
-    validate: [is.required(), is.oneOf(Object.values(IssuePriority))]
+    enum: Object.values(IssuePriority)
   },
   listPosition: {
     type: Number,
-    required: true,
-    validate: is.required()
+    required: true
   },
   description: {
     type: String,
@@ -77,8 +71,7 @@ const issueSchema = new Schema<IIssue>({
   reporterId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
-    validate: is.required()
+    required: true
   },
   projectId: {
     type: Schema.Types.ObjectId,
@@ -145,4 +138,4 @@ issueSchema.virtual('reporter', {
   justOne: true
 });
 
-export const Issue = mongoose.model<IIssue>('Issue', issueSchema);
+export const Issue = mongoose.models.Issue || mongoose.model<IIssue>('Issue', issueSchema);

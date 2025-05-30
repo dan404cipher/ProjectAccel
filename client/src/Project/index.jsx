@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Navigate, useParams, useNavigate, useLocation, Routes } from 'react-router-dom';
+import { Route, Redirect, useRouteMatch, useHistory } from 'react-router-dom';
 
 import useApi from 'shared/hooks/api';
 import { updateArrayItemById } from 'shared/utils/javascript';
@@ -18,65 +18,38 @@ import Sprints from './Sprints';
 import Summary from './Summary';
 
 const Project = () => {
-  const { projectId } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  console.log('Current route params:', { projectId }); // Debug log
+  const match = useRouteMatch();
+  const history = useHistory();
 
   const issueSearchModalHelpers = createQueryParamModalHelpers('issue-search');
   const issueCreateModalHelpers = createQueryParamModalHelpers('issue-create');
 
-  const [{ data, error, setLocalData }, fetchProject] = useApi.get(
-    projectId ? '/projects/:projectId' : '/projects',
-    projectId ? { projectId } : {},
-    {
-      onSuccess: (response) => {
-        console.log('Project data:', response); // Debug log
-      },
-      onError: (error) => {
-        console.error('Project fetch error:', error); // Debug log
-      }
-    }
-  );
+  const [{ data, error, setLocalData }, fetchProject] = useApi.get(`/projects/${match.params.projectId}`);
 
-  console.log('Component state:', { data, error, projectId }); // Debug log
+  // Add logging to debug the data flow
+  console.log('Project data:', data);
+  console.log('Project error:', error);
+  console.log('Project ID from URL:', match.params.projectId);
 
-  // If we're at /project without an ID, show project selector
-  if (!projectId) {
-    console.log('Rendering project selector'); // Debug log
-    return (
-      <ProjectPage>
-        <NavbarLeft
-          issueSearchModalOpen={issueSearchModalHelpers.open}
-          issueCreateModalOpen={issueCreateModalHelpers.open}
-        />
-        <div style={{ marginLeft: 60, padding: 32 }}>
-          <h1>Select a Project</h1>
-          <ProjectSelector currentProject={data?.project} />
-        </div>
-      </ProjectPage>
-    );
-  }
-
+  // Show loader while data is being fetched
   if (!data) {
-    console.log('Loading...'); // Debug log
+    console.log('No data yet, showing loader');
     return <PageLoader />;
   }
   
+  // Show error if there's an error or no project data
   if (error) {
-    console.log('Error:', error); // Debug log
-    return <PageError />;
+    console.log('Error loading project:', error);
+    return <PageError error={error} />;
+  }
+
+  if (!data.project) {
+    console.log('No project data in response');
+    return <PageError error={{ message: 'Project not found' }} />;
   }
 
   const { project } = data;
-  console.log('Project data:', project); // Debug log
-
-  // If project not found, redirect to project selector
-  if (!project) {
-    console.log('Project not found, redirecting to selector'); // Debug log
-    return <Navigate to="/project" replace />;
-  }
+  console.log('Project loaded successfully:', project);
 
   const updateLocalProjectIssues = (issueId, updatedFields) => {
     setLocalData(currentData => ({
@@ -87,13 +60,6 @@ const Project = () => {
     }));
   };
 
-  // If we're at the exact project path (e.g., /project/123), redirect to board
-  if (location.pathname === `/project/${projectId}`) {
-    console.log('Redirecting to board view'); // Debug log
-    return <Navigate to={`/project/${project.id}/board`} replace />;
-  }
-
-  console.log('Rendering project view'); // Debug log
   return (
     <ProjectPage>
       <NavbarLeft
@@ -101,9 +67,9 @@ const Project = () => {
         issueCreateModalOpen={issueCreateModalHelpers.open}
       />
 
-      {project && <Sidebar project={project} />}
+      <Sidebar project={project} />
 
-      {issueSearchModalHelpers.isOpen() && project && (
+      {issueSearchModalHelpers.isOpen() && (
         <Modal
           isOpen
           testid="modal:issue-search"
@@ -114,7 +80,7 @@ const Project = () => {
         />
       )}
 
-      {issueCreateModalHelpers.isOpen() && project && (
+      {issueCreateModalHelpers.isOpen() && (
         <Modal
           isOpen
           testid="modal:issue-create"
@@ -125,52 +91,40 @@ const Project = () => {
             <IssueCreate
               project={project}
               fetchProject={fetchProject}
-              onCreate={() => {
-                if (project && project.id) {
-                  navigate(`/project/${project.id}/board`);
-                }
-              }}
+              onCreate={() => history.push(`${match.url}/board`)}
               modalClose={modal.close}
             />
           )}
         />
       )}
 
-      <Routes>
-        <Route
-          path="board"
-          element={
-            project && (
-              <Board
-                project={project}
-                fetchProject={fetchProject}
-                updateLocalProjectIssues={updateLocalProjectIssues}
-              />
-            )
-          }
-        />
+      <Route
+        path={`${match.path}/board`}
+        render={() => (
+          <Board
+            project={project}
+            fetchProject={fetchProject}
+            updateLocalProjectIssues={updateLocalProjectIssues}
+          />
+        )}
+      />
 
-        <Route
-          path="settings"
-          element={
-            project && <ProjectSettings project={project} fetchProject={fetchProject} />
-          }
-        />
+      <Route
+        path={`${match.path}/settings`}
+        render={() => <ProjectSettings project={project} fetchProject={fetchProject} />}
+      />
 
-        <Route
-          path="sprints"
-          element={
-            project && <Sprints project={project} fetchProject={fetchProject} />
-          }
-        />
+      <Route
+        path={`${match.path}/sprints`}
+        render={() => <Sprints project={project} fetchProject={fetchProject} />}
+      />
 
-        <Route
-          path="summary"
-          element={
-            project && <Summary project={project} fetchProject={fetchProject} />
-          }
-        />
-      </Routes>
+      <Route
+        path={`${match.path}/summary`}
+        render={() => <Summary project={project} fetchProject={fetchProject} />}
+      />
+
+      {match.isExact && <Redirect to={`${match.url}/board`} />}
     </ProjectPage>
   );
 };

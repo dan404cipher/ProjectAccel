@@ -45,18 +45,19 @@ const initializeApp = async (): Promise<void> => {
     credentials: true
   }));
   app.use(express.json());
-  app.use(express.urlencoded());
+  app.use(express.urlencoded({ extended: true }));
   app.use(addRespondToResponse);
 
   // Setup API routes first
   setupRoutes(app);
 
-  // Serve static files from the client build directory
-  app.use(express.static(path.join(__dirname, '../../client/build')));
+  // Serve static files from the client directory based on environment
+  const clientDir = process.env.NODE_ENV === 'production' ? 'build' : 'dev';
+  app.use(express.static(path.join(__dirname, `../../client/${clientDir}`)));
 
   // For any other route, serve the frontend application
   app.get('*', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/build', 'index.html'));
+    res.sendFile(path.join(__dirname, `../../client/${clientDir}`, 'index.html'));
   });
 
   app.use(handleError);

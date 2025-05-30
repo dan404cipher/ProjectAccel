@@ -1,33 +1,23 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Router, Switch, Route, Redirect } from 'react-router-dom';
 
+import history from 'browserHistory';
 import Project from 'Project';
 import Authenticate from 'Auth/Authenticate';
 import PageError from 'shared/components/PageError';
 import CreateProject from 'Project/CreateProject';
 
-const AppRoutes = () => {
-  console.log('Routes component rendering'); // Debug log
+const Routes = () => (
+  <Router history={history}>
+    <Switch>
+      <Redirect exact from="/" to="/project" />
+      <Route path="/authenticate" component={Authenticate} />
+      <Route path="/project/create" component={CreateProject} />
+      <Route path="/project/:projectId" component={Project} />
+      <Route exact path="/project" component={Project} />
+      <Route component={PageError} />
+    </Switch>
+  </Router>
+);
 
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/project" replace />} />
-        <Route path="/authenticate" element={<Authenticate />} />
-        <Route path="/project/create" element={<CreateProject />} />
-        <Route 
-          path="/project/:projectId/board" 
-          element={<Project />}
-        />
-        <Route path="/project/:projectId/settings" element={<Project />} />
-        <Route path="/project/:projectId/sprints" element={<Project />} />
-        <Route path="/project/:projectId/summary" element={<Project />} />
-        <Route path="/project/:projectId" element={<Project />} />
-        <Route path="/project" element={<Project />} />
-        <Route path="*" element={<PageError />} />
-      </Routes>
-    </BrowserRouter>
-  );
-};
-
-export default AppRoutes;
+export default Routes;

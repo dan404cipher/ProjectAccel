@@ -23,7 +23,7 @@ const propTypes = {
 };
 
 const ProjectSidebar = ({ project }) => {
-  const projectId = project.id;
+  const projectId = project._id || project.id;
 
   return (
     <Sidebar>

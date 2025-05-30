@@ -21,18 +21,8 @@ const defaults = {
 
 const api = (method, url, variables) =>
   new Promise((resolve, reject) => {
-    let finalUrl = url;
-    if (variables && typeof variables === 'object') {
-      Object.keys(variables).forEach(key => {
-        if (finalUrl.includes(`:${key}`)) {
-          finalUrl = finalUrl.replace(`:${key}`, variables[key]);
-          delete variables[key];
-        }
-      });
-    }
-
     axios({
-      url: `${defaults.baseURL}${finalUrl}`,
+      url: `${defaults.baseURL}${url}`,
       method,
       headers: defaults.headers(),
       params: method === 'get' ? variables : undefined,
