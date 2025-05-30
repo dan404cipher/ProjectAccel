@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Route, Redirect, useRouteMatch, useHistory } from 'react-router-dom';
 
 import useApi from 'shared/hooks/api';
@@ -20,16 +20,23 @@ import Summary from './Summary';
 const Project = () => {
   const match = useRouteMatch();
   const history = useHistory();
+  const [key, setKey] = useState(0); // Add a key state to force re-render
 
   const issueSearchModalHelpers = createQueryParamModalHelpers('issue-search');
   const issueCreateModalHelpers = createQueryParamModalHelpers('issue-create');
 
-  const [{ data, error, setLocalData }, fetchProject] = useApi.get(`/projects/${match.params.projectId}`);
+  const [{ data, error, setLocalData }, fetchProject] = useApi.get(`/projects/${match.params.projectId}`, {}, { cachePolicy: 'no-cache' });
 
   // Add logging to debug the data flow
   console.log('Project data:', data);
   console.log('Project error:', error);
   console.log('Project ID from URL:', match.params.projectId);
+
+  // Refetch project data when project ID changes
+  useEffect(() => {
+    fetchProject();
+    setKey(prevKey => prevKey + 1); // Increment key to force re-render
+  }, [match.params.projectId, fetchProject]);
 
   // Show loader while data is being fetched
   if (!data) {
@@ -102,6 +109,7 @@ const Project = () => {
         path={`${match.path}/board`}
         render={() => (
           <Board
+            key={key} // Add key prop to force re-render
             project={project}
             fetchProject={fetchProject}
             updateLocalProjectIssues={updateLocalProjectIssues}

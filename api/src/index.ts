@@ -51,14 +51,16 @@ const initializeApp = async (): Promise<void> => {
   // Setup API routes first
   setupRoutes(app);
 
-  // Serve static files from the client directory based on environment
-  const clientDir = process.env.NODE_ENV === 'production' ? 'build' : 'dev';
-  app.use(express.static(path.join(__dirname, `../../client/${clientDir}`)));
+  // In development, we don't need to serve static files as webpack-dev-server handles it
+  if (process.env.NODE_ENV === 'production') {
+    // Serve static files from the client build directory in production
+    app.use(express.static(path.join(__dirname, '../../client/build')));
 
-  // For any other route, serve the frontend application
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(__dirname, `../../client/${clientDir}`, 'index.html'));
-  });
+    // For any other route, serve the frontend application
+    app.get('*', (_req, res) => {
+      res.sendFile(path.join(__dirname, '../../client/build', 'index.html'));
+    });
+  }
 
   app.use(handleError);
 

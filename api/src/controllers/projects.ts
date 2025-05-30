@@ -25,9 +25,28 @@ export const getProjectWithUsersAndIssues = catchErrors(async (req, res) => {
   }
 
   const project = await Project.findById(projectId)
-    .populate('users', 'name email avatarUrl')
-    .populate('issues')
-    .populate('sprints');
+    .populate({
+      path: 'users',
+      select: 'name email avatarUrl',
+      model: 'User'
+    })
+    .populate({
+      path: 'issues',
+      model: 'Issue',
+      populate: {
+        path: 'users',
+        model: 'User',
+        select: 'name email avatarUrl'
+      }
+    })
+    .populate({
+      path: 'sprints',
+      model: 'Sprint',
+      populate: {
+        path: 'issues',
+        model: 'Issue'
+      }
+    });
   
   console.log('Found project:', project ? 'yes' : 'no');
 

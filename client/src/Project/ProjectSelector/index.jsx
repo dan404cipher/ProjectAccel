@@ -9,10 +9,11 @@ import { ProjectSelectorContainer } from './Styles';
 
 const ProjectSelector = ({ currentProject, label, sidebar }) => {
   const history = useHistory();
-  const [{ data }] = useApi.get('/projects');
+  const [{ data }] = useApi.get('/projects', {}, { cachePolicy: 'no-cache' });
 
   const handleProjectChange = (projectId) => {
-    history.push(`/project/${projectId}/board`);
+    // Force a complete page reload by using window.location
+    window.location.href = `/project/${projectId}/board`;
   };
 
   if (!data) return null;
